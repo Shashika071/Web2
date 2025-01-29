@@ -1,28 +1,28 @@
-const express = require('express'); // Framework for web servers and APIs
-const cors = require('cors'); // Middleware for enabling CORS to communicate between frontend and backend
+const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
-const fs = require('fs'); // Work with file systems
-require('dotenv').config(); // Load environment variables from a .env file
-const employeeRoutes = require('./routes/employeeRoutes'); // Contains URLs to API requests
+const fs = require('fs');
 const path = require('path');
 const xssClean = require('xss-clean');
+require('dotenv').config();
+const employeeRoutes = require('./routes/employeeRoutes');
 
 const app = express();
 
-// Apply XSS clean middleware
+// Apply XSS protection
 app.use(xssClean());
 
 // Validate required environment variables
 if (!process.env.MONGODB_URI) {
-  console.error('MONGODB_URI is not set in the environment variables.');
-  process.exit(1); // Exit the process if MONGODB_URI is not set
+  console.error('❌ Error: MONGODB_URI is not set in environment variables.');
+  process.exit(1);
 }
 
-// Middleware to parse incoming JSON requests
+// Middleware to parse JSON and form data
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Add this line to parse form data
+app.use(express.urlencoded({ extended: true }));
 
-// Ensure the uploads directory exists
+// Ensure the 'uploads' directory exists
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
@@ -31,23 +31,23 @@ if (!fs.existsSync(uploadsDir)) {
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(uploadsDir));
 
-// CORS middleware
+// CORS middleware (Allow only requests from your frontend)
 app.use(
   cors({
-    origin: 'https://employee-management-2z1.pages.dev', // Allow React frontend
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow specific HTTP methods
-    allowedHeaders: ['Content-Type', 'Authorization'], // Allow headers
-    credentials: true, // Allow cookies if needed
+    origin: 'https://web-8du.pages.dev', // ✅ Correct frontend URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   })
 );
 
-// MongoDB connection with error handling
+// Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ Connected to MongoDB'))
   .catch((err) => {
-    console.error('Error connecting to MongoDB:', err);
-    process.exit(1); // Exit the process if MongoDB connection fails
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
   });
 
 // Use the employee routes
@@ -55,34 +55,36 @@ app.use('/api', employeeRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'Server is running successfully!' });
+  res.status(200).json({ status: '✅ Server is running successfully!' });
 });
 
-// General error handling middleware for unknown routes
-app.use((req, res, next) => {
-  res.status(404).json({ error: 'Route not found' });
+// Handle unknown routes
+app.use((req, res) => {
+  res.status(404).json({ error: '❌ Route not found' });
 });
 
 // Centralized error handler
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: 'Internal server error' });
+  res.status(500).json({ error: '❌ Internal server error' });
 });
 
-// Start the server
+// Use correct PORT from .env or fallback
 const PORT = parseInt(process.env.PORT, 10) || 5001;
+const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
+
 let server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running at: ${BACKEND_URL}`);
 });
 
 // Handle EADDRINUSE error (port already in use)
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use. Trying another port...`);
+    console.error(`❌ Port ${PORT} is already in use. Retrying on another port...`);
     setTimeout(() => {
       server.close();
       server = app.listen(PORT + 1, () => {
-        console.log(`Server running on port ${PORT + 1}`);
+        console.log(`🚀 Server running on port ${PORT + 1}`);
       });
     }, 1000);
   } else {
