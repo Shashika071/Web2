@@ -4,15 +4,15 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 const xssClean = require('xss-clean');
-
-// Directly defining values without .env
-const MONGODB_URI = "mongodb+srv://thirasaim21062:fDfu0hcev0z9KfBq@cluster0.mlkd8.mongodb.net/employeeManagement?retryWrites=true&w=majority&appName=Cluster0";
-const PORT = 5001; // Ensure this is a number
-const BACKEND_URL = "webproject-dzhpfpf7dtfgcshh.southindia-01.azurewebsites.net"; // Backend domain
-
 const employeeRoutes = require('./routes/employeeRoutes');
 
 const app = express();
+
+// Environment variables directly in the file (instead of .env)
+const MONGODB_URI = "mongodb+srv://thirasaim21062:fDfu0hcev0z9KfBq@cluster0.mlkd8.mongodb.net/employeeManagement?retryWrites=true&w=majority&appName=Cluster0";
+const PORT = 5001;
+const BACKEND_URL = "https://webproject-dzhpfpf7dtfgcshh.southindia-01.azurewebsites.net"; // Adjust to the proper backend URL
+const FRONTEND_URL = "https://web-8du.pages.dev"; // Your frontend URL
 
 // Apply XSS protection
 app.use(xssClean());
@@ -33,7 +33,7 @@ app.use('/uploads', express.static(uploadsDir));
 // CORS middleware (Allow only requests from your frontend)
 app.use(
   cors({
-    origin: 'https://web-8du.pages.dev', // ✅ Correct frontend URL
+    origin: FRONTEND_URL, // ✅ Correct frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -68,7 +68,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: '❌ Internal server error' });
 });
 
-// Use correct PORT or fallback
+// Use correct PORT from .env or fallback
 let server = app.listen(PORT, () => {
   console.log(`🚀 Server running at: ${BACKEND_URL}`);
 });
