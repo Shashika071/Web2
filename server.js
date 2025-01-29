@@ -4,19 +4,18 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 const xssClean = require('xss-clean');
-require('dotenv').config();
+
+// Directly defining values without .env
+const MONGODB_URI = "mongodb+srv://thirasaim21062:fDfu0hcev0z9KfBq@cluster0.mlkd8.mongodb.net/employeeManagement?retryWrites=true&w=majority&appName=Cluster0";
+const PORT = 5001; // Ensure this is a number
+const BACKEND_URL = "webproject-dzhpfpf7dtfgcshh.southindia-01.azurewebsites.net"; // Backend domain
+
 const employeeRoutes = require('./routes/employeeRoutes');
 
 const app = express();
 
 // Apply XSS protection
 app.use(xssClean());
-
-// Validate required environment variables
-if (!process.env.MONGODB_URI) {
-  console.error('❌ Error: MONGODB_URI is not set in environment variables.');
-  process.exit(1);
-}
 
 // Middleware to parse JSON and form data
 app.use(express.json());
@@ -43,7 +42,7 @@ app.use(
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err);
@@ -69,10 +68,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: '❌ Internal server error' });
 });
 
-// Use correct PORT from .env or fallback
-const PORT = parseInt(process.env.PORT, 10) || 5001;
-const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
-
+// Use correct PORT or fallback
 let server = app.listen(PORT, () => {
   console.log(`🚀 Server running at: ${BACKEND_URL}`);
 });
